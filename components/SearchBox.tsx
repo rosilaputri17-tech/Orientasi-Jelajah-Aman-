@@ -17,7 +17,11 @@ return (
     onChangeText={setTeks}
     style={{ flex: 1, borderWidth: 1, padding: 8 }}
     />
-    <Button title="Cari" onPress={() => onCari(teks)} />
+    <Button 
+    title="Cari" 
+    onPress={() => onCari(teks)} 
+    accessibilityLabel="Cari cuaca untuk kota yang dimasukkan"
+    />
     </View>
     );
 }
