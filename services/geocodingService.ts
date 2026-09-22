@@ -1,4 +1,4 @@
-// src/services/geocodingService.ts
+// services/geocodingService.ts
 import { GeocodingResponse, HasilGeocoding } from "../types/geocoding";
 
 const BASE_URL = "https://geocoding-api.open-meteo.com/v1/search";
