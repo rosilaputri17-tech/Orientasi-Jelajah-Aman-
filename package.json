@@ -1,7 +1,7 @@
 {
   "name": "orientasi-jelajah-aman",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "expo-router/entry",
   "dependencies": {
     "expo": "~57.0.22",
     "expo-router": "~57.0.21",
