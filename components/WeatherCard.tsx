@@ -10,7 +10,7 @@ export default function WeatherCard({ kota, suhu, tingkatAQI }: WeatherCardProps
     return (
         // 2. Ganti angka padding menjadi spacing.sedang
         <View 
-            accessibilityLabel={'Cuaca ${kota}, suhu ${suhu} derajat, kualitas udara ${tingkatAQI}'}
+            accessibilityLabel={`Cuaca ${kota}, suhu ${suhu} derajat, kualitas udara ${tingkatAQI}`}
             style={{ padding: spacing.sedang, borderRadius: 8, backgroundColor:"#F4F7FA" }}>
             {/* 3. Ganti angka fontSize menjadi typeScale */}
             <Text style={{ fontWeight: "bold", fontSize: typeScale.judul }}>{kota}</Text>

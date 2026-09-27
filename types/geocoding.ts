@@ -1,4 +1,4 @@
-// src/types/geocoding.ts
+//types/geocoding.ts
 export interface HasilGeocoding {
 id: number;
 name: string;
