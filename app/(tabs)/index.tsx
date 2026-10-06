@@ -250,5 +250,3 @@ export default function HalamanUtama() {
 
 
 
-git add "app/(tabs)/index.tsx"
-git commit -m "feat: aktifkan tombol tambah favorit di Beranda"
