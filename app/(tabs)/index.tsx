@@ -1,19 +1,12 @@
 // app/(tabs)/index.tsx
 import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  mintaIzinLokasi,
-  ambilKoordinatSaatIni,
-} from "../../services/locationService";
-import {
-  View,
-  Text,
-  ActivityIndicator,
-  Button,
-  TouchableOpacity,
-} from "react-native";
+import { mintaIzinLokasi, ambilKoordinatSaatIni } from "../../services/locationService";
+import { View, ActivityIndicator, Button, TouchableOpacity } from "react-native"; // Text dihapus dari sini
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 
+import Text from "../../components/TeksTema"; // BARU: Text yang ikut tema
+import { useTema } from "../../context/TemaContext"; // BARU
 import SearchBox from "../../components/SearchBox";
 import WeatherCard from "../../components/WeatherCard";
 import AtribusiCuaca from "../../components/AtribusiCuaca";
@@ -26,20 +19,18 @@ import { ambilKualitasUdara } from "../../services/airQualityService";
 import { konversiTingkatAQI } from "../../services/weatherAdapter";
 import { labelKodeCuaca } from "../../constants/weatherCodes";
 import { HasilGeocoding } from "../../types/geocoding";
-import {
-  DataCuacaLengkap,
-  DataKualitasUdara,
-} from "../../types/weather";
+import { DataCuacaLengkap, DataKualitasUdara } from "../../types/weather";
 import { ambilSemuaFavorit } from "../../services/favoritStorage";
+import { tambahRiwayat } from "../../services/riwayatStorage";
 
 export default function HalamanUtama() {
+  const { warna } = useTema(); // BARU
+
   const [teksCari, setTeksCari] = useState("");
   const [hasilPencarian, setHasilPencarian] = useState<HasilGeocoding[]>([]);
-  const [kotaTerpilih, setKotaTerpilih] =
-    useState<HasilGeocoding | null>(null);
+  const [kotaTerpilih, setKotaTerpilih] = useState<HasilGeocoding | null>(null);
   const [cuaca, setCuaca] = useState<DataCuacaLengkap | null>(null);
-  const [kualitasUdara, setKualitasUdara] =
-    useState<DataKualitasUdara | null>(null);
+  const [kualitasUdara, setKualitasUdara] = useState<DataKualitasUdara | null>(null);
   const [sedangMemuat, setSedangMemuat] = useState(false);
   const [pesanError, setPesanError] = useState<string | null>(null);
   const [pesanLokasi, setPesanLokasi] = useState<string | null>(null);
@@ -49,6 +40,9 @@ export default function HalamanUtama() {
   const online = useOnline();
   const teksTertunda = useDebounce(teksCari, 500);
   const requestIdRef = useRef(0);
+
+  // Parameter dari tab Riwayat (kota yang diklik)
+  const { cari, t } = useLocalSearchParams<{ cari?: string; t?: string }>();
 
   useEffect(() => {
     if (teksTertunda.trim().length === 0) {
@@ -72,9 +66,42 @@ export default function HalamanUtama() {
       });
   }, [teksTertunda]);
 
+  // Saat kota di tab Riwayat diklik, cari otomatis dan tampilkan cuacanya
+  useEffect(() => {
+    if (!cari) return;
+
+    let dibatalkan = false;
+
+    cariKota(cari)
+      .then((hasil) => {
+        if (dibatalkan) return;
+
+        setHasilPencarian(hasil);
+
+        if (hasil.length === 0) {
+          setPesanCari(`Kota "${cari}" tidak ditemukan.`);
+          return;
+        }
+
+        setPesanCari(null);
+        pilihKota(hasil[0]);
+      })
+      .catch(() => {
+        if (dibatalkan) return;
+        setHasilPencarian([]);
+        setPesanCari(
+          "Pencarian gagal. Saat offline, hanya kota yang pernah dicari yang tersedia."
+        );
+      });
+
+    return () => {
+      dibatalkan = true;
+    };
+  }, [cari, t]);
+
   // Cek ulang status favorit setiap kali layar ini kembali tampil
   // (misalnya setelah menyimpan di halaman tambah-favorit,
-  // atau setelah menghapus di halaman Riwayat)
+  // atau setelah menghapus di halaman Favorit)
   useFocusEffect(
     useCallback(() => {
       let dibatalkan = false;
@@ -119,6 +146,11 @@ export default function HalamanUtama() {
 
       setCuaca(dataCuaca);
       setKualitasUdara(dataAQI);
+
+      // Catat ke riwayat (bukan untuk "Lokasi Saat Ini")
+      if (kota.id !== -1) {
+        tambahRiwayat(kota.name);
+      }
     } catch (err) {
       if (idSaatIni !== requestIdRef.current) return;
 
@@ -169,7 +201,9 @@ export default function HalamanUtama() {
   const waktuCache = cuaca?.diperbaruiPada ?? kualitasUdara?.diperbaruiPada;
 
   return (
-    <SafeAreaView style={{ flex: 1, padding: 16, gap: 16 }}>
+    <SafeAreaView
+      style={{ flex: 1, padding: 16, gap: 16, backgroundColor: warna.latar }} // BARU
+    >
       <BannerOffline />
 
       <SearchBox onCari={setTeksCari} />
@@ -182,13 +216,15 @@ export default function HalamanUtama() {
       {pesanLokasi && (
         <Text
           accessibilityLabel="Pesan lokasi"
-          style={{ color: "#888" }}
+          style={{ color: warna.teksSekunder }}
         >
           {pesanLokasi}
         </Text>
       )}
 
-      {pesanCari && <Text style={{ color: "#888" }}>{pesanCari}</Text>}
+      {pesanCari && (
+        <Text style={{ color: warna.teksSekunder }}>{pesanCari}</Text>
+      )}
 
       {hasilPencarian.map((kota) => (
         <TouchableOpacity
@@ -279,7 +315,7 @@ export default function HalamanUtama() {
         )}
 
       {cuaca && (
-        <Text style={{ fontSize: 12, color: "#888" }}>
+        <Text style={{ fontSize: 12, color: warna.teksSekunder }}>
           Kondisi:{" "}
           {labelKodeCuaca(cuaca.saatIni.kodeCuaca)} • Angin{" "}
           {cuaca.saatIni.kecepatanAngin} km/j
@@ -290,7 +326,7 @@ export default function HalamanUtama() {
         <Text
           style={{
             fontSize: 12,
-            color: "#888",
+            color: warna.teksSekunder,
             textAlign: "center",
           }}
         >
