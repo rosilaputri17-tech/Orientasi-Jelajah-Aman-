@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { View, TextInput } from "react-native";
+import { useTema } from "../context/TemaContext";
 
 interface SearchBoxProps {
   onCari: (teks: string) => void;
 }
 
 export default function SearchBox({ onCari }: SearchBoxProps) {
+  const { warna } = useTema();
   const [teks, setTeks] = useState("");
 
   function handleChange(nilai: string) {
@@ -17,6 +19,7 @@ export default function SearchBox({ onCari }: SearchBoxProps) {
     <View style={{ width: "100%" }}>
       <TextInput
         placeholder="Cari nama kota..."
+        placeholderTextColor={warna.teksSekunder}
         value={teks}
         onChangeText={handleChange}
         accessibilityLabel="Cari cuaca untuk kota yang dimasukkan"
@@ -24,9 +27,11 @@ export default function SearchBox({ onCari }: SearchBoxProps) {
           width: "100%",
           height: 50,
           borderWidth: 1,
-          borderColor: "#999",
+          borderColor: warna.garis,
           borderRadius: 8,
           paddingHorizontal: 12,
+          color: warna.teks,
+          backgroundColor: warna.kartu,
         }}
       />
     </View>
