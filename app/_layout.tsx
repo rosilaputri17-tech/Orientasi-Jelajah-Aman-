@@ -1,26 +1,35 @@
-// app/_layout.tsx (root layout)
-import { useEffect } from "react";
-import { Platform } from "react-native";
+// app/_layout.tsx
 import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import {
+  ThemeProvider as NavTheme,
+  DarkTheme,
+  DefaultTheme,
+} from "expo-router/react-navigation";
+import { TemaProvider, useTema } from "../context/TemaContext";
 
-export default function RootLayout() {
-  // Daftarkan service worker agar web bisa dibuka saat offline
-  useEffect(() => {
-    if (Platform.OS === "web" && "serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .catch((err) => console.log("Service worker gagal:", err));
-    }
-  }, []);
+function IsiLayout() {
+  const { gelap } = useTema();
 
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="detail/[kota]" options={{ title: "Detail Cuaca" }} />
-      <Stack.Screen
-        name="tambah-favorit"
-        options={{ presentation: "modal", title: "Tambah Favorit" }}
-      />
-    </Stack>
+    <NavTheme value={gelap ? DarkTheme : DefaultTheme}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="detail/[kota]" options={{ title: "Detail Cuaca" }} />
+        <Stack.Screen
+          name="tambah-favorit"
+          options={{ presentation: "modal", title: "Tambah Favorit" }}
+        />
+      </Stack>
+      <StatusBar style={gelap ? "light" : "dark"} />
+    </NavTheme>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <TemaProvider>
+      <IsiLayout />
+    </TemaProvider>
   );
 }

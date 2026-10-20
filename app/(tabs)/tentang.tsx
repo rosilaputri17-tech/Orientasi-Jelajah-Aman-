@@ -1,9 +1,13 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native"; // Text dihapus dari sini
+import Text from "../../components/TeksTema"; // BARU
+import { useTema } from "../../context/TemaContext"; // BARU
 import { typeScale, spacing } from "../../constants/styles";
 
 export default function TentangScreen() {
+  const { warna } = useTema(); // BARU
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: warna.latar }]}>
       <Text
         style={styles.title}
         accessibilityLabel="Judul halaman Tentang"
