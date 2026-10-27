@@ -1,14 +1,6 @@
 // app/(tabs)/riwayat.tsx  (Riwayat di atas, Favorit di bawah)
 import { useState, useCallback } from "react";
-import {
-  View,
-  Button,
-  Pressable,
-  ScrollView,
-  Alert,
-  Platform,
-  StyleSheet,
-} from "react-native";
+import { View, Button,Pressable, ScrollView, Alert, Platform, StyleSheet } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Text from "../../components/TeksTema";
