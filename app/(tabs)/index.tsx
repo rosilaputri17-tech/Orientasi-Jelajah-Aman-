@@ -18,7 +18,7 @@ import { mintaIzinLokasi, ambilKoordinatSaatIni } from "../../services/locationS
 import { konversiTingkatAQI } from "../../services/weatherAdapter";
 import { labelKodeCuaca } from "../../constants/weatherCodes";
 import { HasilGeocoding } from "../../types/geocoding";
-import { HasilCuacaOffline, RingkasanKotaTersimpan } from "../../types/cache";
+import { HasilCuacaOffline } from "../../types/cache";
 
 export default function HalamanUtama() {
   const { warna } = useTema();
@@ -27,7 +27,6 @@ export default function HalamanUtama() {
   const [hasilPencarian, setHasilPencarian] = useState<HasilGeocoding[]>([]);
   const [kotaTerpilih, setKotaTerpilih] = useState<HasilGeocoding | null>(null);
   const [hasil, setHasil] = useState<HasilCuacaOffline | null>(null);
-  const [kotaTersimpan, setKotaTersimpan] = useState<RingkasanKotaTersimpan[]>([]);
   const [sedangMemuat, setSedangMemuat] = useState(false);
   const [pesanError, setPesanError] = useState<string | null>(null);
   const [pesanLokasi, setPesanLokasi] = useState<string | null>(null);
@@ -38,15 +37,9 @@ export default function HalamanUtama() {
   // Parameter dari tab Riwayat (kota yang diklik)
   const { cari, t } = useLocalSearchParams<{ cari?: string; t?: string }>();
 
-  async function muatKotaTersimpan() {
-    setKotaTersimpan(await daftarKotaTersimpan());
-  }
-
-  // Saat aplikasi dibuka: buang cache > 7 hari, lalu tampilkan daftar tersimpan
+  // Saat aplikasi dibuka: buang cache > 7 hari
   useEffect(() => {
-    bersihkanCacheLama(BATAS_CACHE_MS)
-      .then(muatKotaTersimpan)
-      .catch(() => {});
+    bersihkanCacheLama(BATAS_CACHE_MS).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -149,7 +142,6 @@ export default function HalamanUtama() {
       );
       if (idSaatIni !== requestIdRef.current) return; // hasil basi, abaikan
       setHasil(data);
-      muatKotaTersimpan();
 
       // Catat ke riwayat (bukan untuk "Lokasi Saat Ini")
       if (kota.id !== -1) {
@@ -204,36 +196,6 @@ export default function HalamanUtama() {
             <Text>{kota.name}</Text>
           </TouchableOpacity>
         ))}
-
-        {kotaTersimpan.length > 0 && (
-          <View style={{ gap: 6 }}>
-            <Text style={{ fontWeight: "bold" }}>
-              Tersimpan di perangkat (bisa dibuka offline)
-            </Text>
-
-            {kotaTersimpan.map((k) => (
-              <TouchableOpacity
-                key={k.kunci}
-                style={{
-                  padding: 12,
-                  borderRadius: 10,
-                  backgroundColor: warna.kartu,
-                }}
-                onPress={() =>
-                  pilihKota({
-                    id: k.id,
-                    name: k.nama,
-                    latitude: k.latitude,
-                    longitude: k.longitude,
-                    country: "",
-                  })
-                }
-              >
-                <Text>{k.nama}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
 
         {sedangMemuat && <ActivityIndicator />}
 
