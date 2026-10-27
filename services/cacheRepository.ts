@@ -87,5 +87,3 @@ const db = await ambilDatabase();
 await db.runAsync("DELETE FROM cache_cuaca");
 }
 
-git add services/cacheRepository.ts
-git commit -m "feat: buat cache repository untuk SQLite"

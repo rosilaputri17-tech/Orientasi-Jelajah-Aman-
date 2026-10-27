@@ -68,8 +68,7 @@ muatKotaTersimpan();
 if (idSaatIni !== requestIdRef.current) return;
 setHasil(null);
 setPesanError(
-"Belum ada data tersimpan dan tidak ada koneksi internet. Sambungkan internet lalu
-coba lagi."
+"Belum ada data tersimpan dan tidak ada koneksi internet. Sambungkan internet lalucoba lagi."
 );
 } finally {
 if (idSaatIni === requestIdRef.current) setSedangMemuat(false);
@@ -82,8 +81,7 @@ setPesanLokasi("Izin lokasi ditolak. Silakan cari kota secara manual di atas.");
 return;
 }
 if (status === "unavailable") {
-  setPesanLokasi("Layanan lokasi tidak aktif di perangkat ini. Silakan cari kota secara
-manual.");
+  setPesanLokasi("Layanan lokasi tidak aktif di perangkat ini. Silakan cari kota secaramanual.");
 return;
 }
 setPesanLokasi(null);
