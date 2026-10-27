@@ -1,15 +1,7 @@
-import { useState, useEffect, useRef } from "react";
-import {
-  View,
-  ScrollView,
-  ActivityIndicator,
-  Button,
-  TouchableOpacity,
-  Alert,
-  Platform,
-} from "react-native";
+import { useState, useEffect, useRef, useCallback } from "react"; // BARU: useCallback
+import { View, ScrollView, ActivityIndicator, Button, TouchableOpacity, Alert, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router"; // BARU: useFocusEffect
 import Text from "../../components/TeksTema";
 import { useTema } from "../../context/TemaContext";
 import SearchBox from "../../components/SearchBox";
@@ -19,13 +11,9 @@ import StatusData from "../../components/StatusData";
 import { useDebounce } from "../../hooks/use-debounce";
 import { cariKota } from "../../services/geocodingService";
 import { ambilCuacaOfflineFirst, BATAS_CACHE_MS } from "../../services/cuacaRepository";
-import {
-  bersihkanCacheLama,
-  daftarKotaTersimpan,
-  hapusCacheKunci,
-  buatKunci,
-} from "../../services/cacheRepository";
+import { bersihkanCacheLama, daftarKotaTersimpan, hapusCacheKunci, buatKunci } from "../../services/cacheRepository";
 import { tambahRiwayat } from "../../services/riwayatStorage";
+import { ambilSemuaFavorit } from "../../services/favoritStorage"; // BARU
 import { mintaIzinLokasi, ambilKoordinatSaatIni } from "../../services/locationService";
 import { konversiTingkatAQI } from "../../services/weatherAdapter";
 import { labelKodeCuaca } from "../../constants/weatherCodes";
@@ -56,10 +44,11 @@ export default function HalamanUtama() {
   const [pesanError, setPesanError] = useState<string | null>(null);
   const [pesanLokasi, setPesanLokasi] = useState<string | null>(null);
   const [pesanCache, setPesanCache] = useState<string | null>(null);
+  const [sudahFavorit, setSudahFavorit] = useState(false); // BARU
   const teksTertunda = useDebounce(teksCari, 500);
   const requestIdRef = useRef(0); // pencegah race condition
 
-  // Parameter dari tab Favorit & Riwayat (kota yang diklik)
+  // Parameter dari tab Riwayat (kota yang diklik)
   const { cari, t } = useLocalSearchParams<{ cari?: string; t?: string }>();
 
   async function muatKotaTersimpan() {
@@ -132,6 +121,33 @@ export default function HalamanUtama() {
       dibatalkan = true;
     };
   }, [cari, t]);
+
+  // BARU: cek ulang status favorit setiap kota berganti dan setiap layar ini
+  // tampil kembali (misalnya setelah menyimpan di halaman tambah-favorit,
+  // atau setelah menghapus favorit di tab Riwayat)
+  useFocusEffect(
+    useCallback(() => {
+      let dibatalkan = false;
+
+      async function cekFavorit() {
+        if (!kotaTerpilih || kotaTerpilih.id === -1) {
+          setSudahFavorit(false);
+          return;
+        }
+
+        const daftar = await ambilSemuaFavorit();
+        const sudahAda = daftar.some((k) => k.id === kotaTerpilih.id);
+
+        if (!dibatalkan) setSudahFavorit(sudahAda);
+      }
+
+      cekFavorit();
+
+      return () => {
+        dibatalkan = true;
+      };
+    }, [kotaTerpilih])
+  );
 
   async function pilihKota(kota: HasilGeocoding, paksaPerbarui = false) {
     setKotaTerpilih(kota);
@@ -299,20 +315,39 @@ export default function HalamanUtama() {
               title="Perbarui Sekarang"
               onPress={() => pilihKota(kotaTerpilih, true)}
             />
-            <Button
-              title="Tambahkan ke Favorit"
-              onPress={() =>
-                router.push({
-                  pathname: "/tambah-favorit",
-                  params: {
-                    id: String(kotaTerpilih.id),
-                    nama: kotaTerpilih.name,
-                    lat: String(kotaTerpilih.latitude),
-                    lon: String(kotaTerpilih.longitude),
-                  },
-                })
-              }
-            />
+
+            {/* BARU: tombol berubah menjadi "SUDAH DIFAVORITKAN" bila sudah tersimpan.
+                "Lokasi Saat Ini" (id -1) tidak bisa difavoritkan. */}
+            {kotaTerpilih.id !== -1 &&
+              (sudahFavorit ? (
+                <View
+                  style={{
+                    backgroundColor: "#9e9e9e",
+                    paddingVertical: 10,
+                    borderRadius: 2,
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "white", fontWeight: "bold" }}>
+                    SUDAH DIFAVORITKAN
+                  </Text>
+                </View>
+              ) : (
+                <Button
+                  title="Tambahkan ke Favorit"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/tambah-favorit",
+                      params: {
+                        id: String(kotaTerpilih.id),
+                        nama: kotaTerpilih.name,
+                        lat: String(kotaTerpilih.latitude),
+                        lon: String(kotaTerpilih.longitude),
+                      },
+                    })
+                  }
+                />
+              ))}
           </>
         )}
 
