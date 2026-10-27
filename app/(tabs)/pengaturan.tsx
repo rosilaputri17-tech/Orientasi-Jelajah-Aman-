@@ -1,19 +1,27 @@
-import { useState } from "react";
-import { Text, Button } from "react-native";
+// app/(tabs)/pengaturan.tsx
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { hapusSemuaCache } from "../../services/cacheRepository";
+import Text from "../../components/TeksTema"; // BARU
+import PilihTema from "../../components/PilihTema"; // BARU
+import { useTema } from "../../context/TemaContext"; // BARU
+
 export default function TabPengaturan() {
-const [pesan, setPesan] = useState<string | null>(null);
-async function hapusDataTersimpan() {
-await hapusSemuaCache();
-setPesan("Data cuaca tersimpan sudah dihapus.");
-}
-return (
-<SafeAreaView style={{ flex: 1, padding: 16, gap: 12 }}>
-<Text style={{ fontSize: 18, fontWeight: "bold" }}>Jelajah Aman</Text>
-<Text>Versi 1.0.0</Text>
-<Button title="Hapus Data Cuaca Tersimpan" onPress={hapusDataTersimpan} />
-{pesan && <Text accessibilityLabel={pesan}>{pesan}</Text>}
-</SafeAreaView>
-);
+  const { warna } = useTema(); // BARU
+
+  return (
+    <SafeAreaView
+      style={{ flex: 1, padding: 16, gap: 24, backgroundColor: warna.latar }} // BARU
+    >
+      {/* Pilihan tema: Terang / Gelap / Ikuti Sistem */}
+      <PilihTema />
+
+      <View style={{ gap: 4 }}>
+        <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+          Jelajah Aman
+        </Text>
+
+        <Text>Versi 1.0.0</Text>
+      </View>
+    </SafeAreaView>
+  );
 }

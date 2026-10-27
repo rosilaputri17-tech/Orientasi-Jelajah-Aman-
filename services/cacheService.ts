@@ -1,18 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { hapusCacheNama } from "./cacheRepository";
 import { HasilGeocoding } from "../types/geocoding";
 
 const AWALAN_GEO = "cache:geo:";
 
-// Harus sama persis dengan skema kunci di weatherService & airQualityService
-const kunciCuaca = (lat: number, lon: number) =>
-  `cache:cuaca:${lat.toFixed(2)},${lon.toFixed(2)}`;
-const kunciUdara = (lat: number, lon: number) =>
-  `cache:udara:${lat.toFixed(2)},${lon.toFixed(2)}`;
-
-// Hapus semua cache milik satu kota: cuaca, kualitas udara,
-// dan hasil kota itu di cache pencarian (geocoding).
-// Mengembalikan jumlah entri cache yang diubah/dihapus.
-export async function hapusCacheKota(nama: string): Promise<number> {
+// Hapus kota ini dari cache pencarian (AsyncStorage) dan sisa cache lama
+// cuaca/udara yang kuncinya berbasis koordinat.
+async function hapusCacheAsyncStorage(nama: string): Promise<number> {
   const target = nama.trim().toLowerCase();
 
   const semuaKunci = await AsyncStorage.getAllKeys();
@@ -36,13 +30,11 @@ export async function hapusCacheKota(nama: string): Promise<number> {
     const cocok = data.filter((k) => k.name.trim().toLowerCase() === target);
     if (cocok.length === 0) continue;
 
-    // cuaca & udara untuk koordinat kota ini
     for (const k of cocok) {
-      kunciDihapus.add(kunciCuaca(k.latitude, k.longitude));
-      kunciDihapus.add(kunciUdara(k.latitude, k.longitude));
+      kunciDihapus.add(`cache:cuaca:${k.latitude.toFixed(2)},${k.longitude.toFixed(2)}`);
+      kunciDihapus.add(`cache:udara:${k.latitude.toFixed(2)},${k.longitude.toFixed(2)}`);
     }
 
-    // buang kota ini dari entri pencarian; hapus entri kalau jadi kosong
     const sisa = data.filter((k) => !cocok.includes(k));
     if (sisa.length === 0) {
       kunciDihapus.add(kunci);
@@ -52,9 +44,16 @@ export async function hapusCacheKota(nama: string): Promise<number> {
   }
 
   const adaDiPerangkat = semuaKunci.filter((k) => kunciDihapus.has(k));
-
   if (adaDiPerangkat.length > 0) await AsyncStorage.multiRemove(adaDiPerangkat);
   if (entriDiperbarui.length > 0) await AsyncStorage.multiSet(entriDiperbarui);
 
   return adaDiPerangkat.length + entriDiperbarui.length;
+}
+
+// Hapus semua cache milik satu kota: baris di SQLite + cache pencarian.
+// Mengembalikan jumlah entri yang terhapus/diubah.
+export async function hapusCacheKota(nama: string): Promise<number> {
+  const dariSqlite = await hapusCacheNama(nama);
+  const dariAsyncStorage = await hapusCacheAsyncStorage(nama);
+  return dariSqlite + dariAsyncStorage;
 }

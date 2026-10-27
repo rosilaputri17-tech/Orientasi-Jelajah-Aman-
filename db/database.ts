@@ -18,7 +18,7 @@ await migrasiDatabase(db);
 return db;
 }
 async function migrasiDatabase(db: SQLite.SQLiteDatabase): Promise<void> {
-const baris = await db.getFirstAsync<{ user_version: number }>("PRAGMAuser_version");
+const baris = await db.getFirstAsync<{ user_version: number }>("PRAGMA user_version");
 let versiSaatIni = baris?.user_version ?? 0;
 if (versiSaatIni >= VERSI_DATABASE) return;
 if (versiSaatIni < 1) {
