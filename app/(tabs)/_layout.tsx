@@ -27,7 +27,7 @@ export default function TabLayout() {
       })}
     >
       <Tabs.Screen name="index"      options={{ title: 'Beranda',          tabBarLabel: 'Beranda' }} />
-      <Tabs.Screen name="riwayat"    options={{ title: 'Favorit & Riwayat', tabBarLabel: 'Riwayat' }} />
+      <Tabs.Screen name="riwayat"    options={{ title: 'Riwayat & Favorit', tabBarLabel: 'Riwayat' }} />
       <Tabs.Screen name="pengaturan" options={{ title: 'Pengaturan',        tabBarLabel: 'Pengaturan' }} />
       <Tabs.Screen name="tentang"    options={{ title: 'Tentang',           tabBarLabel: 'Tentang' }} />
     </Tabs>
