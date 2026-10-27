@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from "react"; // BARU: useCallback
-import { View, ScrollView, ActivityIndicator, Button, TouchableOpacity, Alert, Platform } from "react-native";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { View, ScrollView, ActivityIndicator, Button, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router, useLocalSearchParams, useFocusEffect } from "expo-router"; // BARU: useFocusEffect
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import Text from "../../components/TeksTema";
 import { useTema } from "../../context/TemaContext";
 import SearchBox from "../../components/SearchBox";
@@ -11,26 +11,14 @@ import StatusData from "../../components/StatusData";
 import { useDebounce } from "../../hooks/use-debounce";
 import { cariKota } from "../../services/geocodingService";
 import { ambilCuacaOfflineFirst, BATAS_CACHE_MS } from "../../services/cuacaRepository";
-import { bersihkanCacheLama, daftarKotaTersimpan, hapusCacheKunci, buatKunci } from "../../services/cacheRepository";
+import { bersihkanCacheLama, daftarKotaTersimpan } from "../../services/cacheRepository";
 import { tambahRiwayat } from "../../services/riwayatStorage";
-import { ambilSemuaFavorit } from "../../services/favoritStorage"; // BARU
+import { ambilSemuaFavorit } from "../../services/favoritStorage";
 import { mintaIzinLokasi, ambilKoordinatSaatIni } from "../../services/locationService";
 import { konversiTingkatAQI } from "../../services/weatherAdapter";
 import { labelKodeCuaca } from "../../constants/weatherCodes";
 import { HasilGeocoding } from "../../types/geocoding";
 import { HasilCuacaOffline, RingkasanKotaTersimpan } from "../../types/cache";
-
-// Konfirmasi lintas platform (Alert tidak berfungsi di web)
-function konfirmasi(judul: string, teks: string, aksi: () => void) {
-  if (Platform.OS === "web") {
-    if (window.confirm(teks)) aksi();
-    return;
-  }
-  Alert.alert(judul, teks, [
-    { text: "Batal", style: "cancel" },
-    { text: "Hapus", style: "destructive", onPress: aksi },
-  ]);
-}
 
 export default function HalamanUtama() {
   const { warna } = useTema();
@@ -43,8 +31,7 @@ export default function HalamanUtama() {
   const [sedangMemuat, setSedangMemuat] = useState(false);
   const [pesanError, setPesanError] = useState<string | null>(null);
   const [pesanLokasi, setPesanLokasi] = useState<string | null>(null);
-  const [pesanCache, setPesanCache] = useState<string | null>(null);
-  const [sudahFavorit, setSudahFavorit] = useState(false); // BARU
+  const [sudahFavorit, setSudahFavorit] = useState(false);
   const teksTertunda = useDebounce(teksCari, 500);
   const requestIdRef = useRef(0); // pencegah race condition
 
@@ -122,7 +109,7 @@ export default function HalamanUtama() {
     };
   }, [cari, t]);
 
-  // BARU: cek ulang status favorit setiap kota berganti dan setiap layar ini
+  // Cek ulang status favorit setiap kota berganti dan setiap layar ini
   // tampil kembali (misalnya setelah menyimpan di halaman tambah-favorit,
   // atau setelah menghapus favorit di tab Riwayat)
   useFocusEffect(
@@ -154,7 +141,6 @@ export default function HalamanUtama() {
     const idSaatIni = ++requestIdRef.current;
     setSedangMemuat(true);
     setPesanError(null);
-    setPesanCache(null);
 
     try {
       const data = await ambilCuacaOfflineFirst(
@@ -178,26 +164,6 @@ export default function HalamanUtama() {
     } finally {
       if (idSaatIni === requestIdRef.current) setSedangMemuat(false);
     }
-  }
-
-  // Hapus cache satu kota dari daftar "Tersimpan di perangkat"
-  async function prosesHapusCache(k: RingkasanKotaTersimpan) {
-    await hapusCacheKunci(k.kunci);
-    await muatKotaTersimpan();
-
-    // kalau kota yang sedang tampil adalah kota ini, sembunyikan datanya
-    if (kotaTerpilih && buatKunci(kotaTerpilih.latitude, kotaTerpilih.longitude) === k.kunci) {
-      setHasil(null);
-    }
-    setPesanCache(`Cache ${k.nama} dihapus dari perangkat.`);
-  }
-
-  function hapusCache(k: RingkasanKotaTersimpan) {
-    konfirmasi(
-      "Hapus Cache",
-      `Data cache ${k.nama} akan dihapus dari perangkat. Saat offline, kota ini tidak bisa dibuka lagi sampai dicari ulang saat online. Lanjutkan?`,
-      () => prosesHapusCache(k)
-    );
   }
 
   async function gunakanLokasiSaatIni() {
@@ -245,44 +211,26 @@ export default function HalamanUtama() {
               Tersimpan di perangkat (bisa dibuka offline)
             </Text>
 
-            {pesanCache && (
-              <Text style={{ color: warna.teksSekunder }}>{pesanCache}</Text>
-            )}
-
             {kotaTersimpan.map((k) => (
-              <View
+              <TouchableOpacity
                 key={k.kunci}
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 12,
                   padding: 12,
                   borderRadius: 10,
                   backgroundColor: warna.kartu,
                 }}
+                onPress={() =>
+                  pilihKota({
+                    id: k.id,
+                    name: k.nama,
+                    latitude: k.latitude,
+                    longitude: k.longitude,
+                    country: "",
+                  })
+                }
               >
-                <TouchableOpacity
-                  style={{ flex: 1 }}
-                  onPress={() =>
-                    pilihKota({
-                      id: k.id,
-                      name: k.nama,
-                      latitude: k.latitude,
-                      longitude: k.longitude,
-                      country: "",
-                    })
-                  }
-                >
-                  <Text>{k.nama}</Text>
-                </TouchableOpacity>
-
-                <Button
-                  title="Hapus Cache"
-                  color="#d32f2f"
-                  onPress={() => hapusCache(k)}
-                />
-              </View>
+                <Text>{k.nama}</Text>
+              </TouchableOpacity>
             ))}
           </View>
         )}
@@ -316,7 +264,7 @@ export default function HalamanUtama() {
               onPress={() => pilihKota(kotaTerpilih, true)}
             />
 
-            {/* BARU: tombol berubah menjadi "SUDAH DIFAVORITKAN" bila sudah tersimpan.
+            {/* Tombol berubah menjadi "SUDAH DIFAVORITKAN" bila sudah tersimpan.
                 "Lokasi Saat Ini" (id -1) tidak bisa difavoritkan. */}
             {kotaTerpilih.id !== -1 &&
               (sudahFavorit ? (
