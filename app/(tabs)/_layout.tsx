@@ -7,8 +7,7 @@ type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 // Pasangan ikon: [aktif, tidak aktif]
 const ICONS: Record<string, [IoniconName, IoniconName]> = {
   index:      ['home',               'home-outline'],
-  favorit:    ['heart',              'heart-outline'],
-  riwayat:    ['time',               'time-outline'],
+  riwayat:    ['heart',              'heart-outline'],
   pengaturan: ['settings',           'settings-outline'],
   tentang:    ['information-circle', 'information-circle-outline'],
 };
@@ -27,11 +26,10 @@ export default function TabLayout() {
         },
       })}
     >
-      <Tabs.Screen name="index"      options={{ title: 'Beranda',    tabBarLabel: 'Beranda' }} />
-      <Tabs.Screen name="favorit"    options={{ title: 'Kota Favorit', tabBarLabel: 'Favorit' }} />
-      <Tabs.Screen name="riwayat"    options={{ title: 'Riwayat',     tabBarLabel: 'Riwayat' }} />
-      <Tabs.Screen name="pengaturan" options={{ title: 'Pengaturan',  tabBarLabel: 'Pengaturan' }} />
-      <Tabs.Screen name="tentang"    options={{ title: 'Tentang',     tabBarLabel: 'Tentang' }} />
+      <Tabs.Screen name="index"      options={{ title: 'Beranda',          tabBarLabel: 'Beranda' }} />
+      <Tabs.Screen name="riwayat"    options={{ title: 'Favorit & Riwayat', tabBarLabel: 'Favorit' }} />
+      <Tabs.Screen name="pengaturan" options={{ title: 'Pengaturan',        tabBarLabel: 'Pengaturan' }} />
+      <Tabs.Screen name="tentang"    options={{ title: 'Tentang',           tabBarLabel: 'Tentang' }} />
     </Tabs>
   );
 }
